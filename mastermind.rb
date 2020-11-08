@@ -48,7 +48,7 @@ class DecodingBoard
       puts "|"
     end
   end
-  
+
 end
 
 class Pegs
@@ -91,8 +91,6 @@ class CodeMaker < Pegs
   attr_reader :secret
 
   # again player or CPU
-  # @secret = generate_secret
-  # def initialize(name = "CPU", secret)
   def initialize(name = "CPU")
     @name = name
     @secret = generate_secret
@@ -115,11 +113,30 @@ class CodeMaker < Pegs
     secret
   end
 
+  # [2, 1, 3, 4]
+  def feedback_check(guess) # [1, 2, 3, 4]
+    tips = Hash.new(0)
+    binding.pry
+
+    i = 0
+    while i < 4
+      if guess.values_at(i) == secret.values_at(i)
+        tips['place'] += 1
+
+      elsif secret.include?(guess.values_at(i))
+        tips['color'] += 1
+      end
+
+      i += 1
+    end
+    tips
+  end
+
 end
 
 class CodeBreaker < Pegs
   include CheckGuess
-  attr_accessor :break_guess
+  # attr_accessor :break_guess
 
   def initialize(name)
     @name = name
@@ -140,7 +157,7 @@ class CodeBreaker < Pegs
         print "Insert another guess:" if guess.length < 4
       end
     end
-    @break_guess = guess
+    # @break_guess = guess
     guess
   end
 
@@ -163,20 +180,23 @@ class Match
 
   def start_match
     @turns = 1
-    break_guess = @codebreaker.guess
+    actual_guess = @codebreaker.guess
 
     while @turns < 3
-      @play_board.board[@turns-1]= break_guess
+      @play_board.board[@turns-1]= actual_guess
+
+      binding.pry
+      @codemaker.feedback_check(actual_guess)
+
       @play_board.draw_board
 
-      if code_breaked?(@codemaker.secret, break_guess)
+      if code_breaked?(@codemaker.secret, actual_guess)
         winner_message
       else
-        binding.pry
         puts
         puts "Guess does not match the secret. Try Again.\n"
-        puts
-        break_guess = @codebreaker.guess
+        # puts
+        actual_guess = @codebreaker.guess
         @turns += 1
       end
     end
