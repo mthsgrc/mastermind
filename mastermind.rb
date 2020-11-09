@@ -26,9 +26,9 @@ class DecodingBoard
     create_board
   end
 
-  def board=(x,y,value)
-    self[x][y] = value
-  end
+  # def board=(x,y,value)
+  #   self[x][y] = value
+  # end
 
   def create_board
     for line in @board
@@ -40,7 +40,8 @@ class DecodingBoard
   end
 
   def draw_board
-    puts
+    puts 
+
     for line in @board
       for holes in line
         print "|#{holes}"
@@ -60,6 +61,8 @@ class Pegs
   MAGENTA = "● ".magenta
   WHITE = "● ".white
   BLACK = "● ".black
+  DGRAY = "● ".darkgray
+
 
   def guess_to_peg(guess)
     case guess
@@ -116,14 +119,14 @@ class CodeMaker < Pegs
   # [2, 1, 3, 4]
   def feedback_check(guess) # [1, 2, 3, 4]
     tips = Hash.new(0)
-    binding.pry
+    # binding.pry
 
     i = 0
     while i < 4
-      if guess.values_at(i) == secret.values_at(i)
+      if guess.at(i) == secret.at(i)
         tips['place'] += 1
 
-      elsif secret.include?(guess.values_at(i))
+      elsif secret.include?(guess.at(i).to_s)
         tips['color'] += 1
       end
 
@@ -182,11 +185,17 @@ class Match
     @turns = 1
     actual_guess = @codebreaker.guess
 
-    while @turns < 3
+    while @turns < 10
       @play_board.board[@turns-1]= actual_guess
 
+      tips = @codemaker.feedback_check(actual_guess)
       binding.pry
-      @codemaker.feedback_check(actual_guess)
+
+      @play_board.board[@turns-1].push(">")
+      @play_board.board[@turns-1].push(Pegs::DGRAY)
+      @play_board.board[@turns-1].push("#{tips["place"]}")
+      @play_board.board[@turns-1].push(Pegs::WHITE)
+      @play_board.board[@turns-1].push("#{tips["color"]}")
 
       @play_board.draw_board
 
