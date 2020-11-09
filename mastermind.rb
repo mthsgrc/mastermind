@@ -26,10 +26,6 @@ class DecodingBoard
     create_board
   end
 
-  # def board=(x,y,value)
-  #   self[x][y] = value
-  # end
-
   def create_board
     for line in @board
       for holes in line
@@ -78,17 +74,6 @@ class Pegs
   end
 end
 
-class CodePegs < Pegs
-
-
-end
-
-
-class KeyPegs < Pegs
-
-end
-
-
 class CodeMaker < Pegs
   include CheckGuess
   attr_reader :secret
@@ -116,15 +101,13 @@ class CodeMaker < Pegs
     secret
   end
 
-  #   secret 		# guess
-  def calculate_tips(guess) # [r, m, r, r] [r, e, m, r]
 
-    tips = Hash.new(0)		# [n, m, r, n] [_, e, m, _]
+  def calculate_tips(guess)
 
+    tips = Hash.new(0)
     compare_guess = guess.clone
     temp_secret = secret.clone
 
-    binding.pry
     i = 0
     while i < 4
       if compare_guess.at(i) == secret.at(i)
@@ -145,7 +128,7 @@ class CodeMaker < Pegs
       j += 1
     end
 
-    binding.pry
+    # binding.pry
     tips
   end
 
@@ -153,7 +136,6 @@ end
 
 class CodeBreaker < Pegs
   include CheckGuess
-  # attr_accessor :break_guess
 
   def initialize(name)
     @name = name
@@ -180,14 +162,11 @@ end
 
 class Match
   attr_accessor :play_board
-
   def initialize
     @codemaker = CodeMaker.new
-
     print "Insert name of Player: "
     codebreaker_name = gets.chomp
     @codebreaker = CodeBreaker.new(codebreaker_name.to_s)
-
     @play_board = DecodingBoard.new
 
     start_match
@@ -198,21 +177,23 @@ class Match
     actual_guess = @codebreaker.guess
     test_guess = actual_guess.clone
 
-    while @turns < 10
-      @play_board.board[@turns-1]= actual_guess
-
+    while @turns < 12
+      binding.pry
+      @play_board.board[@turns-1] = actual_guess
       return_feedback(actual_guess)
-
+ 
       if code_breaked?(@codemaker.secret, test_guess)
+        @play_board.draw_board
         winner_message(test_guess)
       else
+        @play_board.draw_board
         puts
         puts "Guess does not match the secret. Try Again.\n"
         # puts
         actual_guess = @codebreaker.guess
         test_guess = actual_guess.clone
-
         @turns += 1
+        # puts "TURN NUMBER >>>> #{@turns}"
       end
     end
     lost_message
@@ -227,7 +208,7 @@ class Match
     @play_board.board[@turns-1].push(Pegs::WHITE)
     @play_board.board[@turns-1].push("#{tips["color"]}")
 
-    @play_board.draw_board
+    # @play_board.draw_board
   end
 
   def code_breaked?(secret, guess)
@@ -235,8 +216,6 @@ class Match
   end
 
   def winner_message(final_code)
-    binding.pry
-    puts
     puts
     puts "Code Cracked!"
     print "SECRET > "
@@ -255,23 +234,18 @@ class Match
   def lost_message
     puts
     puts "You couldn't crack the code."
+    puts "The code was: #{for i in @codemaker.secret; print "#{i}";end}"
   end
 
   def exit_game
-  	answer = ""
+    answer = ""
     print "Thanks for playing.\nDo you want to play again?\n"
-    until answer == "Y" || answer == "N"
-    print "(Y/n)"
+    until answer == "y" || answer == "n"
+      print "(y/n)"
       answer = gets.chomp.upcase!
     end
-
     answer == "Y" ? Match.new : exit
   end
 end
 
-
-
 Match.new
-
-
-# system "clear"
