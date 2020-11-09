@@ -40,7 +40,7 @@ class DecodingBoard
   end
 
   def draw_board
-    puts 
+    puts
 
     for line in @board
       for holes in line
@@ -116,22 +116,22 @@ class CodeMaker < Pegs
     secret
   end
 
-  # [2, 1, 3, 4]
-  def feedback_check(guess) # [1, 2, 3, 4]
-    tips = Hash.new(0)
-    # binding.pry
 
+  def calculate_tips(guess)
+    tips = Hash.new(0)
+    compare_with = guess
+    # binding.pry
     i = 0
     while i < 4
-      if guess.at(i) == secret.at(i)
+      if compare_with.at(i) == secret.at(i)
         tips['place'] += 1
-
-      elsif secret.include?(guess.at(i).to_s)
+        compare_with.delete_at(i)
+      elsif secret.include?(compare_with.at(i))
         tips['color'] += 1
       end
-
       i += 1
     end
+    binding.pry
     tips
   end
 
@@ -148,7 +148,6 @@ class CodeBreaker < Pegs
   def guess
     guess = []
     print "Insert your guess. Choose 4 option between (B)lue, (G)ray, (R)ed, Gr(E)en, Br(O)wn and (M)agenta:"
-    # binding.pry
     until guess.length == 4
       single_guess = gets.chomp
       if valid_guess?(single_guess)
@@ -160,7 +159,6 @@ class CodeBreaker < Pegs
         print "Insert another guess:" if guess.length < 4
       end
     end
-    # @break_guess = guess
     guess
   end
 
@@ -188,16 +186,7 @@ class Match
     while @turns < 10
       @play_board.board[@turns-1]= actual_guess
 
-      tips = @codemaker.feedback_check(actual_guess)
-      binding.pry
-
-      @play_board.board[@turns-1].push(">")
-      @play_board.board[@turns-1].push(Pegs::DGRAY)
-      @play_board.board[@turns-1].push("#{tips["place"]}")
-      @play_board.board[@turns-1].push(Pegs::WHITE)
-      @play_board.board[@turns-1].push("#{tips["color"]}")
-
-      @play_board.draw_board
+      return_feedback(actual_guess)
 
       if code_breaked?(@codemaker.secret, actual_guess)
         winner_message
@@ -210,6 +199,18 @@ class Match
       end
     end
     lost_message
+  end
+
+  def return_feedback(guess)
+    tips = @codemaker.calculate_tips(guess)
+
+    @play_board.board[@turns-1].push(">")
+    @play_board.board[@turns-1].push(Pegs::DGRAY)
+    @play_board.board[@turns-1].push("#{tips["place"]}")
+    @play_board.board[@turns-1].push(Pegs::WHITE)
+    @play_board.board[@turns-1].push("#{tips["color"]}")
+
+    @play_board.draw_board
   end
 
   def code_breaked?(secret, guess)
