@@ -116,21 +116,35 @@ class CodeMaker < Pegs
     secret
   end
 
+  #   secret 		# guess
+  def calculate_tips(guess) # [r, m, r, r] [r, e, m, r]
 
-  def calculate_tips(guess)
-    tips = Hash.new(0)
-    compare_with = guess
-    # binding.pry
+    tips = Hash.new(0)		# [n, m, r, n] [_, e, m, _]
+
+    compare_guess = guess.clone
+    temp_secret = secret.clone
+
+    binding.pry
     i = 0
     while i < 4
-      if compare_with.at(i) == secret.at(i)
+      if compare_guess.at(i) == secret.at(i)
         tips['place'] += 1
-        compare_with.delete_at(i)
-      elsif secret.include?(compare_with.at(i))
-        tips['color'] += 1
+        temp_secret[i] = nil
+        compare_guess[i] = "_"
       end
       i += 1
     end
+
+    j = 0
+    while j < 4
+      if temp_secret.include?(compare_guess.at(j))
+        tips['color'] += 1
+        idx = temp_secret.index(compare_guess.at(j))
+        temp_secret[idx] = nil
+      end
+      j += 1
+    end
+
     binding.pry
     tips
   end
@@ -182,19 +196,22 @@ class Match
   def start_match
     @turns = 1
     actual_guess = @codebreaker.guess
+    test_guess = actual_guess.clone
 
     while @turns < 10
       @play_board.board[@turns-1]= actual_guess
 
       return_feedback(actual_guess)
 
-      if code_breaked?(@codemaker.secret, actual_guess)
-        winner_message
+      if code_breaked?(@codemaker.secret, test_guess)
+        winner_message(test_guess)
       else
         puts
         puts "Guess does not match the secret. Try Again.\n"
         # puts
         actual_guess = @codebreaker.guess
+        test_guess = actual_guess.clone
+
         @turns += 1
       end
     end
@@ -217,7 +234,7 @@ class Match
     secret == guess ? true : false
   end
 
-  def winner_message
+  def winner_message(final_code)
     binding.pry
     puts
     puts
@@ -228,15 +245,27 @@ class Match
     end
     puts
     print "GUESS  > "
-    for i in @codebreaker.break_guess
+    for i in final_code
       print "#{i} "
     end
     puts
+    exit_game
   end
 
   def lost_message
     puts
     puts "You couldn't crack the code."
+  end
+
+  def exit_game
+  	answer = ""
+    print "Thanks for playing.\nDo you want to play again?\n"
+    until answer == "Y" || answer == "N"
+    print "(Y/n)"
+      answer = gets.chomp.upcase!
+    end
+
+    answer == "Y" ? Match.new : exit
   end
 end
 
