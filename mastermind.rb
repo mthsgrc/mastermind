@@ -80,15 +80,22 @@ class CodeMaker < Pegs
 
   # again player or CPU
   def initialize(name = "CPU")
+
     @name = name
-    @secret = generate_secret
+    @name == "CPU" ? @secret = generate_secret : @secret = create_secret
 
   end
 
-  def creat_secret
+  def create_secret
     secret = []
     until secret.length == 4
-      secret << gets.chomp if valid_guess?(secret)
+      print "Insert your code secret: "
+      single_code = gets.chomp
+
+      if valid_guess?(single_code)
+        single_code = single_code.guess_to_peg
+        secret <<  single_code
+      end
     end
     secret
   end
@@ -163,10 +170,27 @@ end
 class Match
   attr_accessor :play_board
   def initialize
-    @codemaker = CodeMaker.new
-    print "Insert name of Player: "
+    print welcome_message
+
+    puts
+    print "To start, insert name of CodeBreaker: "
     codebreaker_name = gets.chomp
     @codebreaker = CodeBreaker.new(codebreaker_name.to_s)
+    puts
+    print "Who will create the secret code:\n"
+    codemaker_name = ""
+    until codemaker_name == "C" || codemaker_name == "P"
+      print "(C)omputer o another (P)layer?\n"
+      codemaker_name = gets.chomp.upcase!
+    end
+
+    if codemaker_name == "P"
+      print "Insert name of CodeMaker Player: "
+      codemaker_name = gets.chomp
+    end
+
+    codemaker_name == "C" ? @codemaker = CodeMaker.new : @codemaker = CodeMaker.new(codemaker_name)
+
     @play_board = DecodingBoard.new
 
     start_match
@@ -177,16 +201,18 @@ class Match
     actual_guess = @codebreaker.guess
     test_guess = actual_guess.clone
 
-    while @turns < 12
-      binding.pry
+    while @turns < 13
+      # binding.pry
       @play_board.board[@turns-1] = actual_guess
       return_feedback(actual_guess)
- 
+
       if code_breaked?(@codemaker.secret, test_guess)
         @play_board.draw_board
         winner_message(test_guess)
       else
+
         @play_board.draw_board
+        break if @turns == 5
         puts
         puts "Guess does not match the secret. Try Again.\n"
         # puts
@@ -197,6 +223,16 @@ class Match
       end
     end
     lost_message
+    exit_game
+  end
+
+  def welcome_message
+    "Welcome to Mastermind.\n
+You will have to crack a secret code to win.\n
+There are four secret colors hidden, and for each guess you make\n
+a feedback is given showing how close you are from the code.\n
+Guess between Blue, Brown, Gray, Green, Magenta and Red."
+
   end
 
   def return_feedback(guess)
@@ -234,13 +270,16 @@ class Match
   def lost_message
     puts
     puts "You couldn't crack the code."
-    puts "The code was: #{for i in @codemaker.secret; print "#{i}";end}"
+    # binding.pry
+    print "The Code is: "
+    print "#{i=0;while i < 4; print "#{@codemaker.secret[i]}";i+=1;end}\n"
+
   end
 
   def exit_game
     answer = ""
     print "Thanks for playing.\nDo you want to play again?\n"
-    until answer == "y" || answer == "n"
+    until answer == "Y" || answer == "N"
       print "(y/n)"
       answer = gets.chomp.upcase!
     end
