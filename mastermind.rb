@@ -6,7 +6,7 @@ require_relative "./string_mod.rb"
 module CheckGuess
   def valid_guess?(guess)
     # binding.pry
-    guess.to_s.upcase!
+    guess = guess.to_s.upcase
     if ["B","G","R","E","O","M"].include?(guess)
       return true
     else
@@ -76,50 +76,81 @@ end
 
 class CodeMaker < Pegs
   include CheckGuess
-  attr_reader :secret
+  attr_reader :code
 
   # again player or CPU
   def initialize(name = "CPU")
 
     @name = name
-    @name == "CPU" ? @secret = generate_secret : @secret = create_secret
+    @name == "CPU" ? @code = generate_code : @code = create_code
 
   end
 
-  def create_secret
-    secret = []
-    until secret.length == 4
-      print "Insert your code secret: "
-      single_code = gets.chomp
+  def create_code
+    code = []
+    until code.length == 4
+      print "Insert your secret code. Choose 4 color from the following:\n(B)lue, (G)ray, (R)ed, Gr(E)en, Br(O)wn and (M)agenta:"
+      # binding.pry
+      single_code = gets.chomp.upcase!
 
       if valid_guess?(single_code)
-        single_code = single_code.guess_to_peg
-        secret <<  single_code
+        single_code = guess_to_peg(single_code)
+      	puts "You selected the color: #{single_code}.\n"
+        code <<  single_code
       end
     end
-    secret
+    puts
+
+    print_code(code)
+
+    self.create_code if accept_code?(code) == false
+    system("clear")
+
+    code
   end
 
-  def generate_secret
-    secret = []
-    while secret.length < 4
-      secret << [BLUE, GRAY, RED, GREEN, BROWN, MAGENTA].sample
+  def generate_code
+    code = []
+    while code.length < 4
+      code << [BLUE, GRAY, RED, GREEN, BROWN, MAGENTA].sample
     end
-    secret
+    code
   end
 
+  def print_code(code)
+  	i = 0
+  	# binding.pry
+  	print "You've created the following secret code: "
+  	while i < code.length
+		print "#{code[i]} "  		
+		i += 1
+  	end
+  	print "\n"
+  end
+
+  def accept_code?(code)
+  	print "Do you accept the created code? 'Y' for accept, 'N' to create another.\n"
+  	answer = gets.chomp.upcase
+
+  	until answer == "Y" || answer == "N"
+  		print "Choose a valid option. Accept created code? (Y/N)"
+  		answer = gets.chomp.upcase
+  	end
+
+  	answer == "Y" ? true : false  	
+  end
 
   def calculate_tips(guess)
 
     tips = Hash.new(0)
     compare_guess = guess.clone
-    temp_secret = secret.clone
+    temp_code = code.clone
 
     i = 0
     while i < 4
-      if compare_guess.at(i) == secret.at(i)
+      if compare_guess.at(i) == code.at(i)
         tips['place'] += 1
-        temp_secret[i] = nil
+        temp_code[i] = nil
         compare_guess[i] = "_"
       end
       i += 1
@@ -127,10 +158,10 @@ class CodeMaker < Pegs
 
     j = 0
     while j < 4
-      if temp_secret.include?(compare_guess.at(j))
+      if temp_code.include?(compare_guess.at(j))
         tips['color'] += 1
-        idx = temp_secret.index(compare_guess.at(j))
-        temp_secret[idx] = nil
+        idx = temp_code.index(compare_guess.at(j))
+        temp_code[idx] = nil
       end
       j += 1
     end
@@ -152,9 +183,10 @@ class CodeBreaker < Pegs
     guess = []
     print "Insert your guess. Choose 4 option between (B)lue, (G)ray, (R)ed, Gr(E)en, Br(O)wn and (M)agenta:"
     until guess.length == 4
-      single_guess = gets.chomp
+      single_guess = gets.chomp.upcase!
       if valid_guess?(single_guess)
         single_guess = guess_to_peg(single_guess)
+        # binding.pry
         guess << single_guess
         for i in guess
           print "#{i} "
@@ -162,6 +194,7 @@ class CodeBreaker < Pegs
         print "Insert another guess:" if guess.length < 4
       end
     end
+
     guess
   end
 
@@ -171,14 +204,15 @@ class Match
   attr_accessor :play_board
   def initialize
     print welcome_message
-
     puts
     print "To start, insert name of CodeBreaker: "
     codebreaker_name = gets.chomp
     @codebreaker = CodeBreaker.new(codebreaker_name.to_s)
+
     puts
-    print "Who will create the secret code:\n"
-    codemaker_name = ""
+    print "Who will create the secret code:\n(C)omputer o another (P)layer?\n"
+    codemaker_name = gets.chomp.upcase!
+
     until codemaker_name == "C" || codemaker_name == "P"
       print "(C)omputer o another (P)layer?\n"
       codemaker_name = gets.chomp.upcase!
@@ -206,13 +240,15 @@ class Match
       @play_board.board[@turns-1] = actual_guess
       return_feedback(actual_guess)
 
-      if code_breaked?(@codemaker.secret, test_guess)
+      if code_breaked?(@codemaker.code, test_guess)
+      	system ('clear')
         @play_board.draw_board
         winner_message(test_guess)
       else
+      	system ('clear')
 
         @play_board.draw_board
-        break if @turns == 5
+        break if @turns == 12
         puts
         puts "Guess does not match the secret. Try Again.\n"
         # puts
@@ -247,15 +283,15 @@ Guess between Blue, Brown, Gray, Green, Magenta and Red."
     # @play_board.draw_board
   end
 
-  def code_breaked?(secret, guess)
-    secret == guess ? true : false
+  def code_breaked?(code, guess)
+    code == guess ? true : false
   end
 
   def winner_message(final_code)
     puts
     puts "Code Cracked!"
     print "SECRET > "
-    for i in @codemaker.secret
+    for i in @codemaker.code
       print "#{i} "
     end
     puts
@@ -272,13 +308,16 @@ Guess between Blue, Brown, Gray, Green, Magenta and Red."
     puts "You couldn't crack the code."
     # binding.pry
     print "The Code is: "
-    print "#{i=0;while i < 4; print "#{@codemaker.secret[i]}";i+=1;end}\n"
+    print "#{i=0;while i < 4; print "#{@codemaker.code[i]}";i+=1;end}\n"
 
   end
 
   def exit_game
     answer = ""
     print "Thanks for playing.\nDo you want to play again?\n"
+    print "(y/n)"
+    answer = gets.chomp.upcase!
+
     until answer == "Y" || answer == "N"
       print "(y/n)"
       answer = gets.chomp.upcase!
@@ -288,3 +327,6 @@ Guess between Blue, Brown, Gray, Green, Magenta and Red."
 end
 
 Match.new
+
+
+
