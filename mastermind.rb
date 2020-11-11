@@ -225,8 +225,8 @@ class Match
 
     codemaker_name == "C" ? @codemaker = CodeMaker.new : @codemaker = CodeMaker.new(codemaker_name)
 
+    system ('clear')
     @play_board = DecodingBoard.new
-
     start_match
   end
 
